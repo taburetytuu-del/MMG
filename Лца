@@ -1,0 +1,506 @@
+-- MMG PANEL v1.0 (Pure Hacker Edition)
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local SoundService = game:GetService("SoundService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local localPlayer = Players.LocalPlayer
+
+-- Защита от повторного запуска
+local old = CoreGui:FindFirstChild("MMGPanelHub")
+if old then old:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MMGPanelHub"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = CoreGui
+
+-- Главное окно
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 340, 0, 260)
+MainFrame.Position = UDim2.new(0.5, -170, 0.5, -130)
+MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = MainFrame
+
+-- Шапка
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 35)
+TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
+
+local TopCorner = Instance.new("UICorner")
+TopCorner.CornerRadius = UDim.new(0, 10)
+TopCorner.Parent = TopBar
+
+local FixFrame = Instance.new("Frame")
+FixFrame.Size = UDim2.new(1, 0, 0, 10)
+FixFrame.Position = UDim2.new(0, 0, 1, -10)
+FixFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+FixFrame.BorderSizePixel = 0
+FixFrame.Parent = TopBar
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -70, 1, 0)
+Title.Position = UDim2.new(0, 12, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "MMG Panel"
+Title.TextColor3 = Color3.fromRGB(0, 255, 65)
+Title.TextSize = 13
+Title.Font = Enum.Font.Code
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+-- Кнопка сворачивания
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+CloseBtn.Position = UDim2.new(1, -32, 0, 4)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+CloseBtn.Text = "-"
+CloseBtn.TextColor3 = Color3.fromRGB(0, 255, 65)
+CloseBtn.TextSize = 16
+CloseBtn.Font = Enum.Font.Code
+CloseBtn.Parent = TopBar
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent = CloseBtn
+
+-- Плавающая кнопка для открытия
+local OpenBtn = Instance.new("TextButton")
+OpenBtn.Name = "OpenSquare"
+OpenBtn.Size = UDim2.new(0, 45, 0, 45)
+OpenBtn.Position = UDim2.new(0, 20, 0, 100)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+OpenBtn.Text = "MMG"
+OpenBtn.TextColor3 = Color3.fromRGB(0, 255, 65)
+OpenBtn.TextSize = 10
+OpenBtn.Font = Enum.Font.Code
+OpenBtn.Visible = false
+OpenBtn.Active = true
+OpenBtn.Draggable = true
+OpenBtn.Parent = ScreenGui
+
+local OpenCorner = Instance.new("UICorner")
+OpenCorner.CornerRadius = UDim.new(0, 10)
+OpenCorner.Parent = OpenBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+MainFrame.Visible = false
+OpenBtn.Visible = true
+end)
+
+OpenBtn.MouseButton1Click:Connect(function()
+MainFrame.Visible = true
+OpenBtn.Visible = false
+end)
+
+-- Панель вкладок слева
+local TabBar = Instance.new("Frame")
+TabBar.Size = UDim2.new(0, 105, 1, -45)
+TabBar.Position = UDim2.new(0, 0, 0, 45)
+TabBar.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+TabBar.BorderSizePixel = 0
+TabBar.Parent = MainFrame
+
+local ContainersParent = Instance.new("Frame")
+ContainersParent.Size = UDim2.new(1, -110, 1, -50)
+ContainersParent.Position = UDim2.new(0, 110, 0, 48)
+ContainersParent.BackgroundTransparency = 1
+ContainersParent.Parent = MainFrame
+
+-- Создание вкладок
+local tabs = {}
+local function createTab(name, index)
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(1, -10, 0, 28)
+btn.Position = UDim2.new(0, 5, 0, 6 + (index - 1) * 32)
+btn.BackgroundColor3 = (index == 1) and Color3.fromRGB(0, 120, 40) or Color3.fromRGB(24, 24, 32)
+btn.Text = name
+btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+btn.TextSize = 10
+btn.Font = Enum.Font.Code
+btn.Parent = TabBar
+
+local bc = Instance.new("UICorner")
+bc.CornerRadius = UDim.new(0, 6)
+bc.Parent = btn
+
+local container = Instance.new("ScrollingFrame")
+container.Size = UDim2.new(1, 0, 1, 0)
+container.BackgroundTransparency = 1
+container.Visible = (index == 1)
+container.CanvasSize = UDim2.new(0, 0, 0, 0)
+container.AutomaticCanvasSize = Enum.AutomaticSize.Y
+container.ScrollBarThickness = 3
+container.Parent = ContainersParent
+
+local layout = Instance.new("UIListLayout")
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 6)
+layout.Parent = container
+
+tabs[name] = {Button = btn, Container = container}
+return btn, container
+
+end
+
+local tabVisual, cVisual = createTab("Visuals", 1)
+local tabTroll, cTroll = createTab("Troll / Spam", 2)
+local tabSystem, cSystem = createTab("System/Audio", 3)
+local tabExtra, cExtra = createTab("New Hacks", 4)
+local tabOwner, cOwner = createTab("Owner", 5)
+
+for name, data in pairs(tabs) do
+data.Button.MouseButton1Click:Connect(function()
+for _, d in pairs(tabs) do
+d.Container.Visible = false
+d.Button.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
+end
+data.Container.Visible = true
+data.Button.BackgroundColor3 = Color3.fromRGB(0, 120, 40)
+end)
+end
+
+local toggles = {
+ChatSpam = false,
+MatrixRain = false,
+ErrorFlood = false
+}
+
+local function createToggle(parent, name, key)
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(1, -5, 0, 30)
+btn.BackgroundColor3 = Color3.fromRGB(120, 30, 30)
+btn.Text = name .. ": OFF"
+btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+btn.TextSize = 10
+btn.Font = Enum.Font.Code
+btn.Parent = parent
+
+local bc = Instance.new("UICorner")
+bc.CornerRadius = UDim.new(0, 6)
+bc.Parent = btn
+
+btn.MouseButton1Click:Connect(function()
+toggles[key] = not toggles[key]
+if toggles[key] then
+btn.BackgroundColor3 = Color3.fromRGB(0, 160, 50)
+btn.Text = name .. ": ON"
+else
+btn.BackgroundColor3 = Color3.fromRGB(120, 30, 30)
+btn.Text = name .. ": OFF"
+
+if key == "MatrixRain" then    
+        local m = CoreGui:FindFirstChild("MatrixMatrixGui")    
+        if m then m:Destroy() end    
+    end    
+end
+
+end)
+
+end
+
+local function createActionButton(parent, name, callback)
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(1, -5, 0, 30)
+btn.BackgroundColor3 = Color3.fromRGB(25, 35, 45)
+btn.Text = name
+btn.TextColor3 = Color3.fromRGB(0, 255, 65)
+btn.TextSize = 10
+btn.Font = Enum.Font.Code
+btn.Parent = parent
+
+local bc = Instance.new("UICorner")
+bc.CornerRadius = UDim.new(0, 6)
+bc.Parent = btn
+
+btn.MouseButton1Click:Connect(callback)
+
+end
+
+-- 1. Вкладка Visuals
+createActionButton(cVisual, "Hack Walls (Anon Decals)", function()
+pcall(function()
+for _, obj in ipairs(Workspace:GetDescendants()) do
+if obj:IsA("BasePart") then
+obj.Color = Color3.fromRGB(255, 255, 255)
+for _, face in ipairs({Enum.NormalId.Front, Enum.NormalId.Back, Enum.NormalId.Left, Enum.NormalId.Right, Enum.NormalId.Top, Enum.NormalId.Bottom}) do
+local decal = Instance.new("Decal")
+decal.Face = face
+decal.Texture = "rbxassetid://6031075931"
+decal.Parent = obj
+end
+end
+end
+end)
+end)
+
+createActionButton(cVisual, "Matrix Green Sky / Lighting", function()
+pcall(function()
+Lighting.Brightness = 5
+Lighting.ClockTime = 2
+Lighting.GlobalShadows = false
+Lighting.Ambient = Color3.fromRGB(0, 255, 65)
+Lighting.OutdoorAmbient = Color3.fromRGB(0, 150, 40)
+end)
+end)
+
+createActionButton(cVisual, "Blind Everyone (Whiteout)", function()
+pcall(function()
+local bGui = Instance.new("ScreenGui")
+bGui.Name = "WhiteoutGui"
+bGui.Parent = CoreGui
+local f = Instance.new("Frame")
+f.Size = UDim2.new(1, 0, 1, 0)
+f.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+f.Parent = bGui
+task.delay(4, function() bGui:Destroy() end)
+end)
+end)
+
+-- 2. Вкладка Troll / Spam
+createActionButton(cTroll, "Execute Jumpscare", function()
+pcall(function()
+local jGui = Instance.new("ScreenGui")
+jGui.Name = "JumpscareGui"
+jGui.Parent = CoreGui
+
+local img = Instance.new("ImageLabel")
+img.Size = UDim2.new(1, 0, 1, 0)
+img.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+img.Image = "rbxassetid://6031075931"
+img.Parent = jGui
+
+local scream = Instance.new("Sound")    
+scream.SoundId = "rbxassetid://9114220460"    
+scream.Volume = 10    
+scream.Parent = jGui    
+scream:Play()    
+
+task.delay(3, function()    
+    if jGui then jGui:Destroy() end    
+end)
+
+end)
+
+end)
+
+createToggle(cTroll, "Chat Spam MMGMMG", "ChatSpam")
+
+-- 3. Вкладка System/Audio
+createActionButton(cSystem, "Global Phonk Overload", function()
+pcall(function()
+local sound = Instance.new("Sound")
+sound.SoundId = "rbxassetid://138391671909650"
+sound.Volume = 10
+sound.Looped = true
+sound.Parent = SoundService
+sound:Play()
+end)
+end)
+
+createActionButton(cSystem, "Stop All Audio", function()
+pcall(function()
+for _, v in ipairs(SoundService:GetDescendants()) do
+if v:IsA("Sound") then v:Stop() v:Destroy() end
+end
+end)
+end)
+
+-- 4. Вкладка New Hacks (Включая функцию Server Crash, которая кикает локально с ошибкой 277)
+createToggle(cExtra, "Matrix Rain Effect", "MatrixRain")
+createToggle(cExtra, "Error Console Flood", "ErrorFlood")
+
+createActionButton(cExtra, "Server Crash", function()
+pcall(function()
+ScreenGui:Destroy()
+localPlayer:Kick("Please check your internet connection and try again.\n(Error Code: 277)")
+end)
+end)
+
+-- Функция Spawn mmgtrain: создает локальный клон скина игрока mmgtrain возле вас
+createActionButton(cExtra, "Spawn mmgtrain", function()
+pcall(function()
+local targetName = "mmgtrain"
+local targetPlayer = Players:FindFirstChild(targetName)
+
+if targetPlayer and targetPlayer.Character and localPlayer.Character then
+local clonedChar = targetPlayer.Character:Clone()
+for _, scriptObj in ipairs(clonedChar:GetDescendants()) do
+if scriptObj:IsA("Script") or scriptObj:IsA("LocalScript") then
+scriptObj:Destroy()
+end
+end
+
+local hrp = localPlayer.Character:FindFirstChild("HumanoidRootPart")    
+    if hrp and clonedChar:FindFirstChild("HumanoidRootPart") then    
+        clonedChar:SetPrimaryPartCFrame(hrp.CFrame + hrp.CFrame.LookVector * 5)    
+    end    
+        
+    clonedChar.Parent = Workspace    
+else    
+    -- Если игрока нет на сервере, загружаем по UserId    
+    task.spawn(function()    
+        pcall(function()    
+            local userId = Players:GetUserIdFromNameAsync(targetName)    
+            if userId and localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then    
+                local model = Players:GetHumanoidModelFromUserId(userId)    
+                if model then    
+                    local hrp = localPlayer.Character.HumanoidRootPart    
+                    model:SetPrimaryPartCFrame(hrp.CFrame + hrp.CFrame.LookVector * 5)    
+                    model.Parent = Workspace    
+                end    
+            end    
+        end)    
+    end)    
+end
+
+end)
+
+end)
+
+-- 5. Вкладка OWNER
+local OwnerCard = Instance.new("Frame")
+OwnerCard.Size = UDim2.new(1, -5, 0, 160)
+OwnerCard.BackgroundColor3 = Color3.fromRGB(20, 20, 28)
+OwnerCard.BorderSizePixel = 0
+OwnerCard.Parent = cOwner
+
+local OwnerCorner = Instance.new("UICorner")
+OwnerCorner.CornerRadius = UDim.new(0, 8)
+OwnerCorner.Parent = OwnerCard
+
+local AvatarImg = Instance.new("ImageLabel")
+AvatarImg.Size = UDim2.new(0, 60, 0, 60)
+AvatarImg.Position = UDim2.new(0.5, -30, 0, 12)
+AvatarImg.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+AvatarImg.BorderSizePixel = 0
+AvatarImg.Parent = OwnerCard
+
+local AvatarCorner = Instance.new("UICorner")
+AvatarCorner.CornerRadius = UDim.new(1, 0)
+AvatarCorner.Parent = AvatarImg
+
+task.spawn(function()
+pcall(function()
+local userId = Players:GetUserIdFromNameAsync("mmgtrain")
+if userId then
+local thumbType = Enum.ThumbnailType.HeadShot
+local thumbSize = Enum.ThumbnailSize.Size420x420
+local content, isReady = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
+if isReady then
+AvatarImg.Image = content
+end
+end
+end)
+end)
+
+local NickLabel = Instance.new("TextLabel")
+NickLabel.Size = UDim2.new(1, 0, 0, 20)
+NickLabel.Position = UDim2.new(0, 0, 0, 78)
+NickLabel.BackgroundTransparency = 1
+NickLabel.Text = "OWNER: mmgtrain"
+NickLabel.TextColor3 = Color3.fromRGB(0, 255, 65)
+NickLabel.TextSize = 12
+NickLabel.Font = Enum.Font.Code
+NickLabel.Parent = OwnerCard
+
+local LinkButton = Instance.new("TextButton")
+LinkButton.Size = UDim2.new(1, -16, 0, 32)
+LinkButton.Position = UDim2.new(0, 8, 0, 110)
+LinkButton.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+LinkButton.Text = "t.me/mmgpanel"
+LinkButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+LinkButton.TextSize = 11
+LinkButton.Font = Enum.Font.Code
+LinkButton.Parent = OwnerCard
+
+local LinkCorner = Instance.new("UICorner")
+LinkCorner.CornerRadius = UDim.new(0, 6)
+LinkCorner.Parent = LinkButton
+
+LinkButton.MouseButton1Click:Connect(function()
+pcall(function()
+if setclipboard then
+setclipboard("https://t.me/mmgpanel")
+LinkButton.Text = "[ COPIED TO CLIPBOARD! ]"
+task.wait(1.5)
+LinkButton.Text = "t.me/mmgpanel"
+end
+end)
+end)
+
+local spamTimer = 0
+local errorTimer = 0
+
+-- Главный цикл
+RunService.Heartbeat:Connect(function(dt)
+pcall(function()
+if toggles.ChatSpam then
+spamTimer = spamTimer + dt
+if spamTimer >= 1.5 then
+spamTimer = 0
+pcall(function()
+local textChatService = game:GetService("TextChatService")
+if textChatService.ChatInputBarConfiguration.TargetTextChannel then
+textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync("MMGMMGMMG")
+else
+ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("MMGMMGMMG", "All")
+end
+end)
+end
+end
+
+if toggles.MatrixRain then
+if not CoreGui:FindFirstChild("MatrixMatrixGui") then
+local mGui = Instance.new("ScreenGui")
+mGui.Name = "MatrixMatrixGui"
+mGui.Parent = CoreGui
+
+local mLabel = Instance.new("TextLabel")    
+        mLabel.Name = "MatrixText"    
+        mLabel.Size = UDim2.new(1, 0, 1, 0)    
+        mLabel.BackgroundTransparency = 1    
+        mLabel.TextColor3 = Color3.fromRGB(0, 255, 65)    
+        mLabel.TextSize = 14    
+        mLabel.Font = Enum.Font.Code    
+        mLabel.TextXAlignment = Enum.TextXAlignment.Left    
+        mLabel.TextYAlignment = Enum.TextYAlignment.Top    
+        mLabel.Parent = mGui    
+    end    
+        
+    local gui = CoreGui:FindFirstChild("MatrixMatrixGui")    
+    if gui and gui:FindFirstChild("MatrixText") then    
+        local chars = "0101010101MMGMMGABCDEF#$@*&"    
+        local str = ""    
+        for i = 1, 150 do    
+            str = str .. string.sub(chars, math.random(1, #chars), math.random(1, #chars)) .. " "    
+            if i % 15 == 0 then str = str .. "\n" end    
+        end    
+        gui.MatrixText.Text = str    
+    end    
+end    
+
+if toggles.ErrorFlood then    
+    errorTimer = errorTimer + dt    
+    if errorTimer >= 0.2 then    
+        errorTimer = 0    
+        warn("[ROOT TERMINAL]: ACCESS ATTEMPT DETECTED -> INJECTION SUCCESSFUL [ID: 99482]")    
+    end    
+end
+
+end)
+
+end)
+
+print("MMG Panel Loaded Successfully!")
